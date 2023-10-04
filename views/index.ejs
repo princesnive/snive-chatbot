@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Snive</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f2f2f2;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+      }
+
+      .payment-card {
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        width: 300px;
+        padding: 20px;
+        text-align: center;
+      }
+
+      .card-header h2 {
+        font-size: 24px;
+        margin: 0;
+        color: #333;
+      }
+
+      .card-header p {
+        font-size: 14px;
+        color: #777;
+      }
+
+      .card-details p {
+        font-size: 16px;
+        color: #333;
+        margin: 5px 0;
+      }
+
+      .card-button button {
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      .card-button button:hover {
+        background-color: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="payment-card">
+      <div class="card-header">
+        <h2>Basic Plan</h2>
+        <p>A simple plan with basic features</p>
+      </div>
+      <div class="card-details">
+        <p>Price: $19</p>
+        <p>Users: 1</p>
+        <p>Storage: 10GB</p>
+        <p>Bandwidth: 100GB</p>
+        <p>Currency: USD</p>
+      </div>
+      <div class="card-button">
+        <button id="payButton">Pay Now</button>
+      </div>
+    </div>
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+      const options = {
+        key: "rzp_test_qZeqz6YKBh22jZ", 
+        amount: 1900, 
+        currency: "INR", 
+        name: "Your Company Name",
+        description: "Basic Plan Payment",
+        image: "https://your-company-logo.png", 
+        order_id: "3453446456", 
+        handler: function (response) {
+          alert("Payment successful");
+        },
+        prefill: {
+          name: "John Doe",
+          email: "john@example.com",
+          contact: "1234567890",
+        },
+      };
+
+      const payButton = document.getElementById("payButton");
+
+      payButton.addEventListener("click", function () {
+        const rzp = new Razorpay(options);
+        rzp.open();
+      });
+    </script>
+  </body>
+</html>
