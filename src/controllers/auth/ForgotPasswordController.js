@@ -13,7 +13,16 @@ var transporter = nodemailer.createTransport({
     pass: "d9447d78ab0fc8",
   },
 });
-
+function generateRandomToken(length = 32) {
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let token = "";
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    token += characters.charAt(randomIndex);
+  }
+  return token;
+}
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -31,12 +40,17 @@ exports.forgotPassword = async (req, res) => {
       return ResponseHandler.error(res, "User does not exist", 404);
     }
 
-    // Generate a password reset token
-    const token = jwt.sign({ uid: user.rows[0].uid }, process.env.JWT_SECRET, {
-      expiresIn: "1d",
-    });
+    // Generate a password reset token and expiration time
+    const tokenValue = generateRandomToken();
+    const expirationTimestamp = new Date(Date.now() + 24 * 60 * 60 * 1000); // 1 day expiration
 
-    const resetPasswordLink = `${process.env.CLIENT_URL}/reset-password/${token}`;
+    // Insert the reset token into the database
+    await pool.query(
+      "INSERT INTO reset_tokens (user_id, token_value, expiration_timestamp) VALUES ($1, $2, $3)",
+      [user.rows[0].uid, tokenValue, expirationTimestamp]
+    );
+
+    const resetPasswordLink = `${process.env.CLIENT_URL}/reset-password/${tokenValue}`;
 
     // Send an email with the reset password link
     const mailOptions = {
@@ -45,7 +59,7 @@ exports.forgotPassword = async (req, res) => {
       subject: "Password Reset | Snive",
       html: `
         <h1>Please click the link to reset your password</h1>
-        <a>${resetPasswordLink}</a>
+        <a href="${resetPasswordLink}">${resetPasswordLink}</a>
       `,
     };
 
@@ -63,48 +77,62 @@ exports.forgotPassword = async (req, res) => {
     return ResponseHandler.error(res, "Internal Server Error", 500);
   }
 };
+
 exports.resetPassword = async (req, res) => {
-    try {
-      const { token } = req.params;
-      const { password } = req.body;
-  
-      if (!password) {
-        return ResponseHandler.error(res, "Password is required", 400);
-      }
-  
-      // Check if the token is valid
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-  
-      // Check if the user with the provided ID exists in the database
-      const userExists = await pool.query("SELECT * FROM users WHERE uid = $1", [
-        decoded.uid,
-      ]);
-  
-      if (userExists.rows.length === 0) {
-        return ResponseHandler.error(res, "User does not exist", 404);
-      }
-  
-      // Hash the password using bcrypt
-      const salt = await bcrypt.genSalt(10);
-      const bcryptPassword = await bcrypt.hash(password, salt);
-  
-      // Update the user's password
-      pool.query(
-        "UPDATE users SET password = $1 WHERE uid = $2",
-        [bcryptPassword, decoded.uid],
-        (error, results) => {
-          if (error) {
-            console.error("Error updating password:", error);
-            return ResponseHandler.error(res, "Failed to reset password", 500);
-          } else {
-            console.log("Password updated successfully");
-            return ResponseHandler.success(res, "Password reset successful", 200);
-          }
-        }
-      );
-    } catch (error) {
-      console.error(error);
-      return ResponseHandler.error(res, "Internal Server Error", 500);
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!password) {
+      return ResponseHandler.error(res, "Password is required", 400);
     }
-  };
-  
+
+    // Check if the token is valid
+    const tokenRow = await pool.query(
+      "SELECT * FROM reset_tokens WHERE token_value = $1",
+      [token]
+    );
+
+    if (tokenRow.rows.length === 0) {
+      return ResponseHandler.error(res, "Invalid or expired token", 401);
+    }
+
+    const tokenData = tokenRow.rows[0];
+    const currentTime = new Date();
+
+    if (tokenData.used || currentTime > tokenData.expiration_timestamp) {
+      // Token has already been used or expired
+      return ResponseHandler.error(res, "Invalid or expired token", 401);
+    }
+
+    // Check if the user with the provided user_id exists in the database
+    const userExists = await pool.query("SELECT * FROM users WHERE uid = $1", [
+      tokenData.user_id,
+    ]);
+
+    if (userExists.rows.length === 0) {
+      return ResponseHandler.error(res, "User does not exist", 404);
+    }
+
+    // Hash the new password using bcrypt
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Update the user's password in the database
+    await pool.query("UPDATE users SET password = $1 WHERE uid = $2", [
+      hashedPassword,
+      tokenData.user_id,
+    ]);
+
+    // Mark the token as used in the database
+    await pool.query(
+      "UPDATE reset_tokens SET used = TRUE WHERE token_id = $1",
+      [tokenData.token_id]
+    );
+
+    return ResponseHandler.success(res, "Password reset successful", 200);
+  } catch (error) {
+    console.error(error);
+    return ResponseHandler.error(res, "Internal Server Error", 500);
+  }
+};
