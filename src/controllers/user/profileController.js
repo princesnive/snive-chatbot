@@ -12,13 +12,13 @@ exports.profile = async (req, res) => {
     const result = await pool.query(query);
 
     if (result.rows.length === 0) {
-      return ResponseHandler(res, 404, true, "User not found");
+      return ResponseHandler.error(res, "User not found", 404);
     }
 
-    return ResponseHandler(res, 200, false, "User profile", result.rows[0]);
+    return ResponseHandler.success(res, result.rows[0], "User profile");
   } catch (err) {
     console.log(err);
-    return ResponseHandler(res, 500, true, "Internal server error");
+    return ResponseHandler.error(res, "Internal server error", 500);
   }
 };
 
@@ -28,14 +28,14 @@ exports.updateProfile = async (req, res) => {
     const { name, username, email, phone } = req.body;
 
     if (!name || !username || !email || !phone) {
-      return ResponseHandler(res, 400, true, "Please fill all fields");
+      return ResponseHandler.error(res, "All fields are required", 400);
     }
 
     // Check if the user exists
     const user = await pool.query("SELECT * FROM users WHERE uid = $1", [id]);
 
     if (user.rows.length === 0) {
-      return ResponseHandler(res, 404, true, "User not found");
+      return ResponseHandler.error(res, "User not found", 404);
     }
 
     // Update user profile
@@ -46,9 +46,9 @@ exports.updateProfile = async (req, res) => {
 
     await pool.query(query);
 
-    return ResponseHandler(res, 200, false, "User profile updated");
+    return ResponseHandler.success(res, null, "Profile updated successfully");
   } catch (err) {
     console.error(err);
-    return ResponseHandler(res, 500, true, "Internal server error");
+    return ResponseHandler.error(res, "Internal server error", 500);
   }
 };
