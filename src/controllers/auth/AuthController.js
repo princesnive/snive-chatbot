@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const pool = require("../../configs/Postgress");
 
 const jwt = require("jsonwebtoken");
+const ResponseHandler = require("../../utils/ResponseHandler");
 
 exports.createAccount = async (req, res) => {
   const { name, email, username, phone, password } = req.body;
@@ -21,7 +22,11 @@ exports.createAccount = async (req, res) => {
 
     if (rows.length > 0) {
       await client.query("ROLLBACK");
-      return res.status(400).json({ error: "User already exists" });
+      return ResponseHandler.error(
+        res,
+        "User with the same email or username already exists",
+        400
+      );
     }
 
     // Insert the new user into the database
@@ -37,11 +42,11 @@ exports.createAccount = async (req, res) => {
 
     await client.query("COMMIT");
 
-    res.status(201).json({ message: "User registered successfully" });
+    return ResponseHandler.success(res, "User created successfully", 201);
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("Error registering user:", error);
-    res.status(500).json({ error: "Internal server error" });
+    return ResponseHandler.error(res, "Internal server error", 500);
   } finally {
     client.release();
   }
@@ -58,7 +63,7 @@ exports.login = async (req, res) => {
     const { rows } = await client.query(userQuery, [username]);
 
     if (rows.length === 0) {
-      return res.status(400).json({ error: "Invalid username or password" });
+      return ResponseHandler.error(res, "Invalid username or password", 400);
     }
 
     const {
@@ -71,7 +76,7 @@ exports.login = async (req, res) => {
     const isPasswordCorrect = await bcrypt.compare(password, storedPassword);
 
     if (!isPasswordCorrect) {
-      return res.status(400).json({ error: "Invalid username or password" });
+      return ResponseHandler.error(res, "Invalid  password", 400);
     }
 
     // Remove sensitive information like the hashed password before sending the response
@@ -87,17 +92,10 @@ exports.login = async (req, res) => {
       }
     );
 
-    return res.status(200).json({
-      message: "Logged in successfully",
-      success: true,
-      data: {
-        token,
-        user: userData,
-      },
-    });
+    return ResponseHandler.success(res, { ...userData, token });
   } catch (error) {
     console.error("Error during login:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    return ResponseHandler.error(res, "Internal server error", 500);
   } finally {
     // client.release();
   }
