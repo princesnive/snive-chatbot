@@ -39,15 +39,13 @@ exports.updatePlan = async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-      return ResponseHandler(res, 404, true, "Plan not found");
+      return ResponseHandler.error(res, "Plan not found", 404);
     }
 
-    return ResponseHandler(
+    return ResponseHandler.success(
       res,
-      200,
-      false,
-      "Plan updated successfully",
-      result.rows[0]
+      result.rows[0],
+      "Plan updated successfully"
     );
   } catch (error) {
     console.error(error);
@@ -68,9 +66,13 @@ exports.deletePlan = async (req, res) => {
       return res.status(404).json({ message: "Plan not found" });
     }
 
-    return res.json({ message: "Plan deleted successfully" });
+    return ResponseHandler.success(
+      res,
+      result.rows[0],
+      "Plan deleted successfully"
+    );
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: "Internal server error" });
+    return ResponseHandler(res, 500, true, "Internal server error");
   }
 };
