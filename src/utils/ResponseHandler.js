@@ -1,21 +1,31 @@
 class ResponseHandler {
-  constructor(res, status, error, message, data) {
-    this.res = res;
-    this.status = status;
-    this.error = error;
-    this.message = message;
-    this.data = data;
+  /**
+   * Create a static method to handle success response
+   * @param {Object} res - The response object
+   * @param {Object} data - The data to send in the response
+   * @param {string} message - A message to include in the response
+   * @param {number} code - The HTTP status code (default is 200)
+   */
+  static success(res, data, message = "Success", code = 200) {
+    return res.status(code).json({
+      status: "success",
+      message,
+      data,
+    });
   }
 
-  sendResponse() {
-    const response = {
-      status: this.status,
-      error: this.error,
-      message: this.message,
-      data: this.data,
-    };
-
-    this.res.status(this.error ? 500 : 200).json(response);
+  /**
+   * Create a static method to handle error response
+   * @param {Object} res - The response object
+   * @param {string} error - The error message
+   * @param {number} code - The HTTP status code (default is 500)
+   */
+  static error(res, error, code = 500) {
+    return res.status(code).json({
+      status: "error",
+      error,
+      code,
+    });
   }
 }
 
