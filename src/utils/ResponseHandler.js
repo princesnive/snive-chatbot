@@ -6,7 +6,7 @@ class ResponseHandler {
    * @param {string} message - A message to include in the response
    * @param {number} code - The HTTP status code (default is 200)
    */
-  static success(res, data, message = "Success", code = 200) {
+  static success(res, message = "Success", data, code = 200) {
     return res.status(code).json({
       status: "success",
       message,

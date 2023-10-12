@@ -3,3 +3,10 @@ info:
   title: Snive Api Docs
   description: Optional multiline or single-line description in HTML.
   version: 0.1.9
+
+servers:
+  - url: http://localhost:8080
+    description: Optional server description, e.g. Main (production) server
+  - url: http://localhost:8081
+    description: Optional server description, e.g. Internal staging server for testing
+    

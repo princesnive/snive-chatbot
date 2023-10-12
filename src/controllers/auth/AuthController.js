@@ -42,7 +42,12 @@ exports.createAccount = async (req, res) => {
 
     await client.query("COMMIT");
 
-    return ResponseHandler.success(res, "User created successfully", 201);
+    return ResponseHandler.success(res, "User registered successfully", {
+      name,
+      email,
+      username,
+      phone,
+    });
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("Error registering user:", error);
@@ -53,14 +58,12 @@ exports.createAccount = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
-  const { username, password } = req.body;
-
+  const { email, password } = req.body;
   try {
     const client = await pool.connect();
-
     // Retrieve the user's username, password, and other user details
-    const userQuery = "SELECT * FROM users WHERE username = $1";
-    const { rows } = await client.query(userQuery, [username]);
+    const userQuery = "SELECT * FROM users WHERE email = $1";
+    const { rows } = await client.query(userQuery, [email]);
 
     if (rows.length === 0) {
       return ResponseHandler.error(res, "Invalid username or password", 400);
@@ -92,7 +95,10 @@ exports.login = async (req, res) => {
       }
     );
 
-    return ResponseHandler.success(res, { ...userData, token });
+    return ResponseHandler.success(res, "Login successful", {
+      ...userData,
+      token,
+    });
   } catch (error) {
     console.error("Error during login:", error);
     return ResponseHandler.error(res, "Internal server error", 500);
