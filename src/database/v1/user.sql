@@ -1,4 +1,4 @@
-CREATE TABLE companies (
+CREATE TABLE  (
     cid serial PRIMARY KEY,
     company_name varchar(255),
     description varchar(255),

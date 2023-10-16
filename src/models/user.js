@@ -1,22 +1,60 @@
 const mongoose = require("mongoose");
 
+const { Schema } = mongoose;
+
 // Define the schema
-const conversationSchema = new mongoose.Schema({
-  company_id: String,
-  user_id: String,
-  conversation_id: String,
-  category: String,
+const conversationSchema = new Schema({
+  company_id: {
+    type: String,
+    required: true,
+  },
+  user_id: {
+    type: String,
+    required: true,
+  },
+  chat_bot_token: {
+    type: String,
+    required: true,
+  },
+  conversation_id: {
+    type: String,
+    required: true,
+  },
+  category: {
+    type: String,
+    required: true,
+  },
   conversation: [
     {
-      message: String,
-      sender: String,
-      timestamp: String,
+      message: {
+        type: String,
+        required: true,
+      },
+      sender: {
+        type: String,
+        required: true,
+      },
+      timestamp: {
+        type: Date,
+        default: Date.now,
+      },
     },
   ],
-  total_messages: Number,
-  chat_platform: String,
-  status: String,
-  end_timestamp: String,
+  total_messages: {
+    type: Number,
+    default: 0,
+  },
+  chat_platform: {
+    type: String,
+    required: true,
+  },
+  status: {
+    type: String,
+    required: true,
+  },
+  end_timestamp: {
+    type: Date,
+  },
 });
 
 // Create the model

@@ -1,19 +1,26 @@
-const { Pool } = require("pg");
+const { Client } = require("pg");
 
-const pool = new Pool({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD || "",
-  port: process.env.PGPORT, 
+const connectionString =
+  "postgres://mwyacmeg:dr8Ylrw6dTiP3H1hyGCVYwCzEByIgevu@rain.db.elephantsql.com/mwyacmeg";
+
+const client = new Client({
+  connectionString: connectionString,
 });
 
-pool.query("SELECT NOW()", (err, result) => {
-  if (err) {
-    console.error("Error connecting to PostgreSQL:",err);
-  } else {
-    console.log("Connected to PostgreSQL at", result.rows[0].now);
-  }
-});
+client
+  .connect()
+  .then(() => {
+    console.log("Connected to PostgreSQL database");
+    client.query("SELECT * FROM reset_tokens", (err, res) => {
+      if (err) throw err;
+      for (let row of res.rows) {
+        console.log(JSON.stringify(row));
+      }
+      client.end();
+    });
+  })
+  .catch((err) =>
+    console.error("Error connecting to PostgreSQL database", err)
+  );
 
-module.exports = pool;
+module.exports = client;

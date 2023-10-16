@@ -5,9 +5,12 @@ const profile_router = require("./profile.router");
 const forgot_password_router = require("./forgotPassword.router");
 const web_router = require("./web.router");
 
+const chat_router = require("./chat.route");
+
 router.use("/auth", auth_routes);
 router.use("/user", auth, profile_router);
 router.use("/me", forgot_password_router);
+router.use("/chat", chat_router);
 // common routes
 router.use("/web", web_router);
 
