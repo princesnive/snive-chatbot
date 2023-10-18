@@ -5,10 +5,10 @@ const passport = require("passport");
 
 // Create a new pool instance
 const pool = new Pool({
-  user: "postgres",
-  host: "localhost",
-  database: "humanAi",
-  password: "1512",
+  user: "mwyacmeg",
+  host: "rain.db.elephantsql.com",
+  database: "mwyacmeg",
+  password: "mwyacmeg",
   port: 5432,
 });
 
